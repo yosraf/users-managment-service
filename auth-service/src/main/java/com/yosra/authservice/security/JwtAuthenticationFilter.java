@@ -2,6 +2,7 @@ package com.yosra.authservice.security;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yosra.authservice.config.ServerConfig;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,6 +17,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -49,7 +52,16 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 .withClaim("roles", user.getAuthorities().stream()
                         .map(ga -> ga.getAuthority()).collect(Collectors.toList()))
                 .sign(algorithm);
-        response.setHeader("jwt", accessToken);
+        String refreshToken = JWT.create()
+                .withSubject(user.getUsername())
+                .withExpiresAt(new Date(System.currentTimeMillis() + 15 * 60 * 1000))
+                .withIssuer(request.getRequestURL().toString())
+                .sign(algorithm);
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("Access-token", accessToken);
+        tokens.put("refresh-token", refreshToken);
+        response.setContentType("application/json");
+        new ObjectMapper().writeValue(response.getOutputStream(), tokens);
     }
 
 
