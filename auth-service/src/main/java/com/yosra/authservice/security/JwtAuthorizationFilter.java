@@ -5,6 +5,8 @@ import com.auth0.jwt.JWTVerifier;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.yosra.authservice.config.ServerConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -25,6 +27,9 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
 
     private final ServerConfig config;
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthorizationFilter.class);
+
+
     public JwtAuthorizationFilter(ServerConfig config) {
         this.config = config;
     }
@@ -33,9 +38,11 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest httpServletRequest,
                                     HttpServletResponse httpServletResponse, FilterChain filterChain) throws ServletException, IOException {
 
+        LOGGER.info("Intercepting the incoming request");
         String authorization = httpServletRequest.getHeader("Authorization");
         if (authorization != null && authorization.startsWith("Bearer ")) {
             try {
+                LOGGER.info("Checking the jwt");
                 String jwt = authorization.substring(7);
                 Algorithm algorithm = Algorithm.HMAC256(config.getJwtSecret());
                 JWTVerifier verifier = JWT.require(algorithm).build();
@@ -50,6 +57,7 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
                         null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             } catch (Exception ex) {
+                LOGGER.error("jwt is not valid {} ",ex.getMessage());
                 httpServletResponse.setHeader("error-message", ex.getMessage());
                 httpServletResponse.sendError(HttpServletResponse.SC_FORBIDDEN);
             }
@@ -58,7 +66,5 @@ public class JwtAuthorizationFilter extends OncePerRequestFilter {
             return;
         }
         filterChain.doFilter(httpServletRequest, httpServletResponse);
-
-
     }
 }

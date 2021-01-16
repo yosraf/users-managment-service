@@ -1,5 +1,6 @@
 package com.yosra.authservice.security;
 
+import com.yosra.authservice.config.ServerConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -20,14 +21,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
+
     @Autowired
     private JwtAuthorizationFilter jwtAuthorizationFilter;
-    
+    @Autowired
+    private ServerConfig config;
+
     @Bean
     @Override
     public AuthenticationManager authenticationManagerBean() throws Exception {
         return super.authenticationManagerBean();
     }
+
     @Bean
     PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
@@ -41,9 +46,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http.csrf().disable();
-        http.authorizeRequests().anyRequest().authenticated();
+        http.authorizeRequests().antMatchers("api/login").permitAll();
+        http.authorizeRequests().antMatchers("/protected/*").authenticated();
         http.sessionManagement().sessionCreationPolicy(STATELESS);
-        http.addFilter(new JwtAuthenticationFilter(authenticationManagerBean()));
+        http.addFilterBefore(new JwtAuthenticationFilter(authenticationManagerBean(), config), UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtAuthorizationFilter, UsernamePasswordAuthenticationFilter.class);
     }
 

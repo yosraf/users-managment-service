@@ -6,7 +6,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ServerConfig {
 
-    @Value("${auth.service.secret}")
+    @Value("${auth-service.jwt.secret}")
     private String jwtSecret;
 
     public String getJwtSecret() {

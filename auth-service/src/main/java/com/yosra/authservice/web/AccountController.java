@@ -4,14 +4,12 @@ import com.yosra.authservice.dto.UserRoleDto;
 import com.yosra.authservice.entity.AppRole;
 import com.yosra.authservice.entity.AppUser;
 import com.yosra.authservice.service.AccountService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequestMapping("/protected/")
 public class AccountController {
     private final AccountService accountService;
 

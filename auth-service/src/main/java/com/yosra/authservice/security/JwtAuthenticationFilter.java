@@ -4,7 +4,8 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.yosra.authservice.config.ServerConfig;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -22,21 +23,25 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     private AuthenticationManager authenticationManager;
-    @Autowired
     private ServerConfig config;
 
-    public JwtAuthenticationFilter(AuthenticationManager authenticationManager) {
+    private static final Logger LOGGER = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
+
+    public JwtAuthenticationFilter(AuthenticationManager authenticationManager, ServerConfig config) {
         this.authenticationManager = authenticationManager;
+        this.config = config;
+        setFilterProcessesUrl("/api/login");
+
     }
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         String userName = request.getParameter("userName");
         String password = request.getParameter("password");
+        LOGGER.info("Calling the attemp authenticate user with username {} ", userName);
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userName, password);
         return this.authenticationManager.authenticate(authenticationToken);
     }
@@ -44,6 +49,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response,
                                             FilterChain chain, Authentication authResult) throws IOException, ServletException {
+        LOGGER.info("Generating the jwt ");
         User user = (User) authResult.getPrincipal();
         Algorithm algorithm = Algorithm.HMAC256(config.getJwtSecret());
         String accessToken = JWT.create()
